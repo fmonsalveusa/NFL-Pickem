@@ -1,0 +1,129 @@
+import { useState } from 'react'
+import { useAuth } from './hooks/useAuth'
+import AuthPage     from './pages/AuthPage'
+import PicksPage    from './pages/PicksPage'
+import LeaderboardPage from './pages/LeaderboardPage'
+import GroupsPage   from './pages/GroupsPage'
+import AdminPage    from './pages/AdminPage'
+import { signOut }  from './lib/supabase'
+
+// Iconos SVG inline (sin dependencia externa)
+const Icons = {
+  picks: (active) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2}>
+      <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+    </svg>
+  ),
+  leaderboard: (active) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2}>
+      <path d="M16 8v8M12 11v5M8 14v2M4 20h16"/>
+    </svg>
+  ),
+  groups: (active) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2}>
+      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+    </svg>
+  ),
+  admin: (active) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2}>
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+    </svg>
+  ),
+}
+
+export default function App() {
+  const { user, loading } = useAuth()
+  const [tab, setTab]           = useState('picks')
+  const [activeGroup, setGroup] = useState(null)
+
+  // Nombre corto del usuario
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '?'
+  const initials = userName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+
+  if (loading) {
+    return (
+      <div className="page-loading" style={{ minHeight: '100vh' }}>
+        <div className="spinner" />
+      </div>
+    )
+  }
+
+  if (!user) return <AuthPage />
+
+  // Si no hay grupo seleccionado, ir a la pantalla de grupos
+  const showGroups = !activeGroup || tab === 'groups'
+
+  // Tabs disponibles según si hay grupo activo
+  const tabs = [
+    { id: 'picks',       label: 'Picks',     icon: Icons.picks },
+    { id: 'leaderboard', label: 'Tabla',      icon: Icons.leaderboard },
+    { id: 'groups',      label: 'Grupos',     icon: Icons.groups },
+    { id: 'admin',       label: 'Admin',      icon: Icons.admin },
+  ]
+
+  const isAdmin = activeGroup?.admin_id === user?.id
+
+  return (
+    <>
+      {/* Topbar */}
+      <header className="topbar">
+        <div className="topbar-inner">
+          <div className="topbar-logo">NFL<span>.</span>Pick'Em</div>
+          {activeGroup && tab !== 'groups' && (
+            <div className="topbar-group">
+              🏈 {activeGroup.name}
+            </div>
+          )}
+          <div
+            className="topbar-avatar"
+            title={userName}
+            onClick={() => {
+              if (confirm(`¿Cerrar sesión? (${user.email})`)) signOut()
+            }}
+          >
+            {initials}
+          </div>
+        </div>
+      </header>
+
+      {/* Contenido principal */}
+      <main className="app-container">
+        {tab === 'groups' || !activeGroup ? (
+          <GroupsPage
+            onSelectGroup={(g) => {
+              setGroup(g)
+              setTab('picks')
+            }}
+          />
+        ) : tab === 'picks' ? (
+          <PicksPage groupId={activeGroup.id} groupName={activeGroup.name} />
+        ) : tab === 'leaderboard' ? (
+          <LeaderboardPage groupId={activeGroup.id} groupName={activeGroup.name} />
+        ) : tab === 'admin' ? (
+          <AdminPage group={activeGroup} />
+        ) : null}
+      </main>
+
+      {/* Bottom nav */}
+      <nav className="bottom-nav">
+        {tabs.map(t => {
+          // Oculta Admin si el usuario no es admin del grupo activo
+          if (t.id === 'admin' && !isAdmin) return null
+          const active = tab === t.id
+          return (
+            <button
+              key={t.id}
+              className={`bottom-nav-item ${active ? 'active' : ''}`}
+              onClick={() => setTab(t.id)}
+              aria-label={t.label}
+            >
+              {t.icon(active)}
+              {t.label}
+            </button>
+          )
+        })}
+      </nav>
+    </>
+  )
+}
