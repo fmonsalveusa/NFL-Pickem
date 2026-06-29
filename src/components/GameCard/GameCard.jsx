@@ -1,17 +1,5 @@
 import { useState } from 'react'
 
-/**
- * GameCard — réplica del estilo CBS Pick'Em
- * Props:
- *   game        — objeto con datos del partido (ver lib/supabase.js fetchNFLGames)
- *   userPick    — { pickedTeamId, tiebreakerTotal } | null
- *   groupPcts   — { awayPct: number, homePct: number } porcentaje de picks del grupo
- *   points      — puntos asignados a este juego
- *   isTiebreaker— boolean, es el Monday Night game
- *   onPick      — fn(teamId, side) llamada cuando el usuario selecciona
- *   onTiebreaker— fn(total) llamada cuando cambia el desempate
- *   disabled    — boolean (juego ya empezó, no se puede cambiar)
- */
 export default function GameCard({
   game,
   userPick = null,
@@ -26,12 +14,11 @@ export default function GameCard({
 
   if (!game) return null
 
-  const { away, home, isLocked, isFinal, isLive, status, broadcast, date } = game
+  const { away, home, isLocked, isFinal, isLive, broadcast } = game
 
   const pickedAway = userPick?.pickedTeamId === away.id
   const pickedHome = userPick?.pickedTeamId === home.id
 
-  // Estado visual de cada lado después de que el juego terminó
   const awayCorrect = isFinal && away.winner && pickedAway
   const awayWrong   = isFinal && !away.winner && pickedAway
   const homeCorrect = isFinal && home.winner && pickedHome
@@ -41,13 +28,11 @@ export default function GameCard({
     if (isLocked || disabled) return
     const rect = e.currentTarget.getBoundingClientRect()
     const x = e.clientX - rect.left
-    // Determina si clickeó lado away o home según posición X
     const side = x < rect.width / 2 ? 'away' : 'home'
     const teamId = side === 'away' ? away.id : home.id
     onPick?.(teamId, side)
   }
 
-  // Clase del badge central
   const badgeClass = () => {
     if (awayCorrect || homeCorrect) return 'pick-badge correct'
     if (awayWrong || homeWrong)     return 'pick-badge wrong'
@@ -55,7 +40,6 @@ export default function GameCard({
     return 'pick-badge open'
   }
 
-  // Clase de lado del equipo
   const sideClass = (isAway) => {
     const base = `team-side ${isAway ? 'away' : 'home'}`
     if (isAway) {
@@ -70,17 +54,26 @@ export default function GameCard({
     return base
   }
 
-  // Color de fondo sólido cuando está seleccionado
   const sideStyle = (isAway, team) => {
-    const picked = isAway ? pickedAway : pickedHome
+    const picked  = isAway ? pickedAway : pickedHome
     const correct = isAway ? awayCorrect : homeCorrect
-    if (picked || correct) {
-      return { backgroundColor: team.color }
-    }
+    if (picked || correct) return { backgroundColor: team.color }
     return {}
   }
 
-  // Formato de fecha/hora
+  // Texto blanco cuando el lado está seleccionado o es correcto
+  const textStyle = (isAway) => {
+    const picked  = isAway ? pickedAway : pickedHome
+    const correct = isAway ? awayCorrect : homeCorrect
+    return (picked || correct) ? { color: '#fff' } : {}
+  }
+
+  const recordStyle = (isAway) => {
+    const picked  = isAway ? pickedAway : pickedHome
+    const correct = isAway ? awayCorrect : homeCorrect
+    return (picked || correct) ? { color: 'rgba(255,255,255,0.7)' } : {}
+  }
+
   const gameTime = () => {
     if (isFinal) return null
     const d = new Date(game.date)
@@ -103,7 +96,6 @@ export default function GameCard({
             <span className={`game-score ${away.winner ? 'winner' : ''}`}>{away.score}</span>
             <span className={`game-status-chip ${isLive ? 'live' : ''}`}>
               {isLive ? `Q${game.period} ${game.displayClock}` : 'Final'}
-              {game.displayStatus === 'Final/OT' ? '/OT' : ''}
             </span>
             <span className={`game-score ${home.winner ? 'winner' : ''}`}>{home.score}</span>
           </>
@@ -116,6 +108,7 @@ export default function GameCard({
 
       {/* Equipos */}
       <div className="teams-row">
+
         {/* Away */}
         <div className={sideClass(true)} style={sideStyle(true, away)}>
           <div className="team-watermark">{away.city}</div>
@@ -128,48 +121,27 @@ export default function GameCard({
             />
           </div>
           <div className="team-info">
-            <div className="team-name">
-              <span className="team-abbr">{away.abbr}</span>
-              <span className="team-record-text">{away.record}</span>
+            <div className="team-name" style={textStyle(true)}>
+              {away.name?.toUpperCase()}
             </div>
-            {!isFinal && <div className="team-record">Visitante</div>}
+            <div className="team-record" style={recordStyle(true)}>{away.record}</div>
           </div>
         </div>
 
-        {/* Centro: barra % + badge */}
+        {/* Centro */}
         <div className="center-col">
-          {/* Barra de porcentaje del grupo */}
           <div className="pct-bar">
-            <div
-              className="pct-away"
-              style={{
-                width: `${groupPcts.awayPct}%`,
-                backgroundColor: away.color,
-                opacity: 0.2,
-              }}
-            />
-            <div
-              className="pct-home"
-              style={{ backgroundColor: home.color, opacity: 0.2 }}
-            />
+            <div className="pct-away" style={{ width: `${groupPcts.awayPct}%`, backgroundColor: away.color, opacity: 0.2 }} />
+            <div className="pct-home" style={{ backgroundColor: home.color, opacity: 0.2 }} />
           </div>
-
-          {/* Badge de puntos */}
           <div className={badgeClass()}>
-            {(awayCorrect || homeCorrect) && (
-              <span className="pick-badge-icon">✓</span>
-            )}
-            {(awayWrong || homeWrong) && (
-              <span className="pick-badge-icon">✗</span>
-            )}
+            {(awayCorrect || homeCorrect) && <span className="pick-badge-icon">✓</span>}
+            {(awayWrong   || homeWrong)   && <span className="pick-badge-icon">✗</span>}
             <span className="pick-badge-pts">
               {(pickedAway || pickedHome || awayCorrect || homeCorrect || awayWrong || homeWrong)
-                ? `${points} pts`
-                : 'Pick'}
+                ? `${points} pts` : 'Pick'}
             </span>
           </div>
-
-          {/* Porcentajes */}
           <div className="pct-labels">
             <span className="pct-label">{groupPcts.awayPct}%</span>
             <span className="pct-label">{groupPcts.homePct}%</span>
@@ -180,11 +152,10 @@ export default function GameCard({
         <div className={sideClass(false)} style={sideStyle(false, home)}>
           <div className="team-watermark">{home.city}</div>
           <div className="team-info">
-            <div className="team-name">
-              <span className="team-abbr">{home.abbr}</span>
-              <span className="team-record-text">{home.record}</span>
+            <div className="team-name" style={textStyle(false)}>
+              {home.name?.toUpperCase()}
             </div>
-            {!isFinal && <div className="team-record">Local</div>}
+            <div className="team-record" style={recordStyle(false)}>{home.record}</div>
           </div>
           <div className="team-logo-wrap">
             <img
@@ -195,32 +166,29 @@ export default function GameCard({
             />
           </div>
         </div>
+
       </div>
 
-      {/* Módulo de desempate — solo en Monday Night */}
+      {/* Tiebreaker — Monday Night */}
       {isTiebreaker && !isLocked && (
-        <div className="tiebreaker-card" style={{ margin: '0', borderRadius: '0', border: 'none', borderTop: '1px solid #E2E5E9' }}>
+        <div className="tiebreaker-card" style={{ margin: 0, borderRadius: 0, border: 'none', borderTop: '1px solid #E2E5E9' }}>
           <div className="tb-header">
             <span className="tb-badge">Desempate</span>
             <span className="tb-subtitle">{away.name} vs {home.name}</span>
           </div>
           <p className="tb-desc">
-            Predice el total de puntos combinado del partido. Gana el que más se acerque al marcador real.
+            Predice el total de puntos combinado. Gana el que más se acerque al marcador real.
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <img src={away.logo} alt={away.abbr} style={{ width: 32, height: 32, objectFit: 'contain' }} />
             <img src={home.logo} alt={home.abbr} style={{ width: 32, height: 32, objectFit: 'contain' }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 4 }}>
-                Total de puntos combinado
-              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 4 }}>Total de puntos combinado</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <input
                   className="tb-input"
                   type="number"
-                  min="0"
-                  max="150"
-                  step="1"
+                  min="0" max="150" step="1"
                   placeholder="ej: 47"
                   value={tbTotal}
                   onChange={(e) => {
