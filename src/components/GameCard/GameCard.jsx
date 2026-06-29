@@ -22,8 +22,7 @@ export default function GameCard({
   onTiebreaker,
   disabled = false,
 }) {
-  const [tbAway, setTbAway] = useState('')
-  const [tbHome, setTbHome] = useState('')
+  const [tbTotal, setTbTotal] = useState('')
 
   if (!game) return null
 
@@ -207,63 +206,39 @@ export default function GameCard({
         <div className="tiebreaker-card" style={{ margin: '0', borderRadius: '0', border: 'none', borderTop: '1px solid #E2E5E9' }}>
           <div className="tb-header">
             <span className="tb-badge">Desempate</span>
-            <span className="tb-subtitle">Predice el marcador total combinado</span>
+            <span className="tb-subtitle">{away.name} vs {home.name}</span>
           </div>
           <p className="tb-desc">
-            Si terminas empatado en puntos con otro jugador, el que haya predicho el total más cercano al marcador real gana.
+            Predice el total de puntos combinado del partido. Gana el que más se acerque al marcador real.
           </p>
-          <div className="tb-inputs-row">
-            <div className="tb-team">
-              <img
-                src={away.logo}
-                alt={away.abbr}
-                style={{ width: 28, height: 28, objectFit: 'contain' }}
-              />
-              <span className="tb-team-name">{away.name}</span>
-            </div>
-            <input
-              className="tb-input"
-              type="number"
-              min="0" max="99"
-              placeholder="0"
-              value={tbAway}
-              onChange={(e) => {
-                setTbAway(e.target.value)
-                const total = parseInt(e.target.value || 0) + parseInt(tbHome || 0)
-                onTiebreaker?.(total)
-              }}
-              onClick={(e) => e.stopPropagation()}
-              aria-label={`Puntos ${away.name}`}
-            />
-            <span className="tb-separator">–</span>
-            <input
-              className="tb-input"
-              type="number"
-              min="0" max="99"
-              placeholder="0"
-              value={tbHome}
-              onChange={(e) => {
-                setTbHome(e.target.value)
-                const total = parseInt(tbAway || 0) + parseInt(e.target.value || 0)
-                onTiebreaker?.(total)
-              }}
-              onClick={(e) => e.stopPropagation()}
-              aria-label={`Puntos ${home.name}`}
-            />
-            <div className="tb-team right">
-              <span className="tb-team-name">{home.name}</span>
-              <img
-                src={home.logo}
-                alt={home.abbr}
-                style={{ width: 28, height: 28, objectFit: 'contain' }}
-              />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <img src={away.logo} alt={away.abbr} style={{ width: 32, height: 32, objectFit: 'contain' }} />
+            <img src={home.logo} alt={home.abbr} style={{ width: 32, height: 32, objectFit: 'contain' }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 4 }}>
+                Total de puntos combinado
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  className="tb-input"
+                  type="number"
+                  min="0"
+                  max="150"
+                  step="1"
+                  placeholder="ej: 47"
+                  value={tbTotal}
+                  onChange={(e) => {
+                    setTbTotal(e.target.value)
+                    onTiebreaker?.(parseInt(e.target.value) || null)
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label="Total de puntos combinado"
+                  style={{ width: 80, fontSize: 20, fontWeight: 700 }}
+                />
+                <span style={{ fontSize: 13, color: 'var(--text-2)' }}>puntos totales</span>
+              </div>
             </div>
           </div>
-          {tbTotal !== null && (
-            <p className="tb-total">
-              Total predicho: <strong>{tbTotal} pts</strong>
-            </p>
-          )}
         </div>
       )}
     </div>
