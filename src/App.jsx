@@ -6,6 +6,7 @@ import LeaderboardPage from './pages/LeaderboardPage'
 import GroupsPage      from './pages/GroupsPage'
 import AdminPage       from './pages/AdminPage'
 import SuperAdminPage  from './pages/SuperAdminPage'
+import GroupPicksPage  from './pages/GroupPicksPage'
 import { signOut, supabase } from './lib/supabase'
 
 const Icons = {
@@ -30,14 +31,13 @@ const Icons = {
       <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
     </svg>
   ),
-  superadmin: (active) => (
+  grouppicks: (active) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2}>
-      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+      <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
     </svg>
   ),
-  logout: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={18} height={18}>
-      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2}>
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
     </svg>
   ),
 }
@@ -58,7 +58,8 @@ export default function App() {
       .select('role')
       .eq('id', user.id)
       .single()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        console.log('PERFIL ROLE:', data, error)
         if (data?.role) setUserRole(data.role)
       })
   }, [user])
@@ -77,27 +78,22 @@ export default function App() {
   const isGroupAdmin = activeGroup?.admin_id === user?.id
 
   const tabs = [
-    { id: 'picks',       label: 'Picks',  icon: Icons.picks },
-    { id: 'leaderboard', label: 'Tabla',  icon: Icons.leaderboard },
-    { id: 'groups',      label: 'Grupos', icon: Icons.groups },
+    { id: 'picks',       label: 'Picks',   icon: Icons.picks },
+    { id: 'grouppicks',  label: 'Ver todos', icon: Icons.grouppicks },
+    { id: 'leaderboard', label: 'Tabla',   icon: Icons.leaderboard },
+    { id: 'groups',      label: 'Grupos',  icon: Icons.groups },
     ...(isGroupAdmin ? [{ id: 'admin', label: 'Admin', icon: Icons.admin }] : []),
     ...(isSuperAdmin ? [{ id: 'superadmin', label: 'Master', icon: Icons.superadmin }] : []),
   ]
-
-  const handleLogout = () => {
-    if (confirm(`¿Cerrar sesión?`)) signOut()
-  }
 
   return (
     <>
       <header className="topbar">
         <div className="topbar-inner">
           <div className="topbar-logo">NFL<span>.</span>Pick'Em</div>
-
           {activeGroup && tab !== 'groups' && tab !== 'superadmin' && (
             <div className="topbar-group">🏈 {activeGroup.name}</div>
           )}
-
           {isSuperAdmin && (
             <span style={{
               fontSize: 10, fontWeight: 700, background: '#D97706',
@@ -105,38 +101,12 @@ export default function App() {
               letterSpacing: '0.05em', flexShrink: 0
             }}>MASTER</span>
           )}
-
-          {/* Avatar + nombre */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              background: 'rgba(255,255,255,0.12)',
-              borderRadius: 20, padding: '4px 10px 4px 4px',
-            }}>
-              <div className="topbar-avatar" style={{ margin: 0 }}>{initials}</div>
-              <span style={{ fontSize: 12, color: '#fff', opacity: 0.85 }}>
-                {userName.split(' ')[0]}
-              </span>
-            </div>
-
-            {/* Botón logout */}
-            <button
-              onClick={handleLogout}
-              title="Cerrar sesión"
-              style={{
-                background: 'rgba(255,255,255,0.12)',
-                border: '1px solid rgba(255,255,255,0.2)',
-                borderRadius: 8,
-                width: 34, height: 34,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: '#fff',
-                transition: 'background 0.15s',
-              }}
-              onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.22)'}
-              onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
-            >
-              {Icons.logout()}
-            </button>
+          <div
+            className="topbar-avatar"
+            title={`${userName} — Cerrar sesión`}
+            onClick={() => { if (confirm(`¿Cerrar sesión? (${user.email})`)) signOut() }}
+          >
+            {initials}
           </div>
         </div>
       </header>
@@ -144,6 +114,8 @@ export default function App() {
       <main className="app-container">
         {tab === 'superadmin' ? (
           <SuperAdminPage />
+        ) : tab === 'grouppicks' && activeGroup ? (
+          <GroupPicksPage groupId={activeGroup.id} groupName={activeGroup.name} />
         ) : tab === 'groups' || !activeGroup ? (
           <GroupsPage onSelectGroup={(g) => { setGroup(g); setTab('picks') }} />
         ) : tab === 'picks' ? (
