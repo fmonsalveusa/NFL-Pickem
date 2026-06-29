@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { teamLogo } from '../../lib/teams'
 
 export default function GameCard({
   game,
@@ -115,7 +116,7 @@ export default function GameCard({
           <div className="team-logo-wrap">
             <img
               className="team-logo"
-              src={away.logo || `https://a.espncdn.com/i/teamlogos/nfl/500/${away.abbr?.toLowerCase()}.png`}
+              src={teamLogo(away.abbr)}
               alt={away.fullName}
               onError={(e) => { e.target.style.display = 'none' }}
             />
@@ -160,7 +161,7 @@ export default function GameCard({
           <div className="team-logo-wrap">
             <img
               className="team-logo"
-              src={home.logo || `https://a.espncdn.com/i/teamlogos/nfl/500/${home.abbr?.toLowerCase()}.png`}
+              src={teamLogo(home.abbr)}
               alt={home.fullName}
               onError={(e) => { e.target.style.display = 'none' }}
             />
@@ -180,8 +181,8 @@ export default function GameCard({
             Predice el total de puntos combinado. Gana el que más se acerque al marcador real.
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img src={away.logo} alt={away.abbr} style={{ width: 32, height: 32, objectFit: 'contain' }} />
-            <img src={home.logo} alt={home.abbr} style={{ width: 32, height: 32, objectFit: 'contain' }} />
+            <img src={teamLogo(away.abbr)} alt={away.abbr} style={{ width: 32, height: 32, objectFit: 'contain' }} />
+            <img src={teamLogo(home.abbr)} alt={home.abbr} style={{ width: 32, height: 32, objectFit: 'contain' }} />
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 4 }}>Total de puntos combinado</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
