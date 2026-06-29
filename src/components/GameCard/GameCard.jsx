@@ -90,10 +90,6 @@ export default function GameCard({
     })
   }
 
-  const tbTotal = tbAway && tbHome
-    ? parseInt(tbAway) + parseInt(tbHome)
-    : null
-
   return (
     <div
       className="game-card"
