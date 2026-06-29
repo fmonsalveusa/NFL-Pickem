@@ -1,6 +1,4 @@
 // Colores oficiales y datos de todos los 32 equipos NFL
-// Los logos vienen de ESPN CDN: https://a.espncdn.com/i/teamlogos/nfl/500/{abbr}.png
-
 export const NFL_TEAMS = {
   ARI: { name: 'Cardinals', city: 'Arizona',      primary: '#97233F', secondary: '#000000', text: '#FFFFFF' },
   ATL: { name: 'Falcons',   city: 'Atlanta',      primary: '#A71930', secondary: '#000000', text: '#FFFFFF' },
@@ -36,15 +34,21 @@ export const NFL_TEAMS = {
   WSH: { name: 'Commanders',city: 'Washington',   primary: '#5A1414', secondary: '#FFB612', text: '#FFB612' },
 }
 
-// URL del logo oficial de ESPN
+// Logos personalizados (reemplazan ESPN cuando están desactualizados)
+const CUSTOM_LOGOS = {
+  LAR: 'https://wgrhmakqcakvmgugtsvd.supabase.co/storage/v1/object/public/team-logos/lar.png',
+  NYJ: 'https://wgrhmakqcakvmgugtsvd.supabase.co/storage/v1/object/public/team-logos/nyj.png',
+}
+
+// URL del logo — usa custom si existe, sino ESPN
 export const teamLogo = (abbr) =>
+  CUSTOM_LOGOS[abbr?.toUpperCase()] ||
   `https://a.espncdn.com/i/teamlogos/nfl/500/${abbr?.toLowerCase()}.png`
 
-// Calcula si el color primario es oscuro (para saber si el texto blanco es legible)
+// Calcula si el color primario es oscuro
 export const isDark = (hex) => {
   const r = parseInt(hex.slice(1, 3), 16)
   const g = parseInt(hex.slice(3, 5), 16)
   const b = parseInt(hex.slice(5, 7), 16)
-  // Fórmula de luminancia relativa
   return (r * 299 + g * 587 + b * 114) / 1000 < 128
 }
