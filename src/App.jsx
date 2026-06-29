@@ -35,6 +35,11 @@ const Icons = {
       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
     </svg>
   ),
+  logout: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={18} height={18}>
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+    </svg>
+  ),
 }
 
 export default function App() {
@@ -53,8 +58,7 @@ export default function App() {
       .select('role')
       .eq('id', user.id)
       .single()
-      .then(({ data, error }) => {
-        console.log('PERFIL ROLE:', data, error)
+      .then(({ data }) => {
         if (data?.role) setUserRole(data.role)
       })
   }, [user])
@@ -80,14 +84,20 @@ export default function App() {
     ...(isSuperAdmin ? [{ id: 'superadmin', label: 'Master', icon: Icons.superadmin }] : []),
   ]
 
+  const handleLogout = () => {
+    if (confirm(`¿Cerrar sesión?`)) signOut()
+  }
+
   return (
     <>
       <header className="topbar">
         <div className="topbar-inner">
           <div className="topbar-logo">NFL<span>.</span>Pick'Em</div>
+
           {activeGroup && tab !== 'groups' && tab !== 'superadmin' && (
             <div className="topbar-group">🏈 {activeGroup.name}</div>
           )}
+
           {isSuperAdmin && (
             <span style={{
               fontSize: 10, fontWeight: 700, background: '#D97706',
@@ -95,12 +105,38 @@ export default function App() {
               letterSpacing: '0.05em', flexShrink: 0
             }}>MASTER</span>
           )}
-          <div
-            className="topbar-avatar"
-            title={`${userName} — Cerrar sesión`}
-            onClick={() => { if (confirm(`¿Cerrar sesión? (${user.email})`)) signOut() }}
-          >
-            {initials}
+
+          {/* Avatar + nombre */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'rgba(255,255,255,0.12)',
+              borderRadius: 20, padding: '4px 10px 4px 4px',
+            }}>
+              <div className="topbar-avatar" style={{ margin: 0 }}>{initials}</div>
+              <span style={{ fontSize: 12, color: '#fff', opacity: 0.85 }}>
+                {userName.split(' ')[0]}
+              </span>
+            </div>
+
+            {/* Botón logout */}
+            <button
+              onClick={handleLogout}
+              title="Cerrar sesión"
+              style={{
+                background: 'rgba(255,255,255,0.12)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: 8,
+                width: 34, height: 34,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', color: '#fff',
+                transition: 'background 0.15s',
+              }}
+              onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.22)'}
+              onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
+            >
+              {Icons.logout()}
+            </button>
           </div>
         </div>
       </header>
