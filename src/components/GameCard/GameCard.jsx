@@ -78,10 +78,12 @@ export default function GameCard({
   const gameTime = () => {
     if (isFinal) return null
     const d = new Date(game.date)
-    return d.toLocaleString('es-US', {
+    const formatted = d.toLocaleString('es-US', {
       weekday: 'short', month: 'short', day: 'numeric',
       hour: 'numeric', minute: '2-digit', timeZoneName: 'short'
     })
+    // Capitaliza primera letra de cada palabra (Dom, Sept, etc.)
+    return formatted.replace(/\b\w/g, l => l.toUpperCase())
   }
 
   return (
